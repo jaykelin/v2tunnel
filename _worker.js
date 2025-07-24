@@ -32,7 +32,6 @@ export default {
               // 发送请求到后端并返回响应
               return await fetch(newRequest);
             } catch (e) {
-              // 如果后端连接失败，返回服务器错误
               return new Response(e.stack || e, { status: 500 });
             }
           }

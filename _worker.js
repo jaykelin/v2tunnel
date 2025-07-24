@@ -3,30 +3,43 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // --- 新增功能：路径匹配 ---
-    // 从环境变量获取指定的 WebSocket 路径
-    // 如果没有设置 WS_PATH，任何转发都不会发生
-    const WS_PATH = env.WS_PATH;
+    // 根据请求路径匹配相应的后端进行转发。
+    if (env.BACKEND_URL) {
+      // 按行分割，并过滤掉空行
+      const backendUrls = env.BACKEND_URL.trim().split('\n').filter(line => line.trim() !== '');
 
-    // 1. 检查请求路径是否与 WS_PATH 匹配
-    if (WS_PATH && pathname === WS_PATH) {
-      // 路径匹配，将请求转发到后端
-      const backendHost = env.BACKEND_HOST || 'your-host.com'; // 后端主机
-      const backendPort = env.BACKEND_PORT || 443;                 // 后端端口
+      for (const backendUrlString of backendUrls) {
+        try {
+          // 解析每行的 URL
+          const backendUrl = new URL(backendUrlString.trim());
+          const pathToMatch = backendUrl.pathname;
 
-      // 修改请求的目标地址
-      url.hostname = backendHost;
-      url.port = backendPort;
+          // 如果请求路径以配置的路径开头，则进行转发
+          // 例如，请求 /api/users/123 会匹配配置的 https://backend.com/api/
+          if (pathname.startsWith(pathToMatch)) {
+            // 创建一个新的 URL 对象用于转发
+            const targetUrl = new URL(request.url);
+            
+            // 设置转发目标的主机、端口和协议
+            targetUrl.hostname = backendUrl.hostname;
+            targetUrl.port = backendUrl.port;
+            targetUrl.protocol = backendUrl.protocol;
 
-      // 使用修改后的 URL 创建新请求，并保留原始请求的所有信息
-      const newRequest = new Request(url, request);
+            // 创建新请求，并保留原始请求的所有信息
+            const newRequest = new Request(targetUrl, request);
 
-      try {
-        // 发送请求到后端并返回响应
-        return await fetch(newRequest);
-      } catch (e) {
-        // 如果后端连接失败，返回服务器错误
-        return new Response(e.stack || e, { status: 500 });
+            try {
+              // 发送请求到后端并返回响应
+              return await fetch(newRequest);
+            } catch (e) {
+              // 如果后端连接失败，返回服务器错误
+              return new Response(e.stack || e, { status: 500 });
+            }
+          }
+        } catch (e) {
+          // 如果 BACKEND_URL 中有无效的 URL，打印错误并忽略，以避免单行配置错误影响整个服务
+          console.error(`Invalid URL in BACKEND_URL: \"${backendUrlString}\"`, e);
+        }
       }
     }
 

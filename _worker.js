@@ -42,6 +42,8 @@ export default {
       }
     }
 
+    
+
     // 2. 检查是否为首页，并执行跳转
     const REDIRECT_URL = env.URL;
     if (REDIRECT_URL && pathname === '/') {

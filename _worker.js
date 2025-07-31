@@ -45,8 +45,6 @@ export default {
     // 2. 检查是否为首页，并执行跳转
     const REDIRECT_URL = env.URL;
     if (REDIRECT_URL && pathname === '/') {
-      // 返回 302 临时重定向
-      //return Response.redirect(REDIRECT_URL, 302);
       return await 代理URL(REDIRECT_URL, url);
     }
 

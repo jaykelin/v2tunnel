@@ -23,7 +23,10 @@ jobs:
 
       - name: 检查备份文件是否存在
         run: |
-          rm _worker.js.backup
+          if [ -f _worker.js.backup ]; then
+            echo "删除备份文件 _worker.js.backup"
+            rm _worker.js.backup
+          fi
           echo "备份文件 _worker.js.backup"
           cp _worker.js _worker.js.backup
           cp _worker.js.backup _worker_temp.js
